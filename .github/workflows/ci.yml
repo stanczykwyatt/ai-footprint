@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Run tests
+        run: swift test
+
+      - name: Build the app
+        run: scripts/build-app.sh
+
+      - name: Check the app has only the sandbox and read-only folders
+        run: |
+          entitlements="$(codesign -d --entitlements - --xml "build/AI Footprint.app" 2>/dev/null)"
+          if ! grep -q "com.apple.security.app-sandbox" <<< "$entitlements"; then
+            echo "::error::AI Footprint must run in the App Sandbox."
+            exit 1
+          fi
+          others="$(grep -o "com\.apple\.[a-z.-]*" <<< "$entitlements" | grep -v -e "^com.apple.security.app-sandbox$" -e "^com.apple.security.temporary-exception.files.home-relative-path.read-only$" || true)"
+          if [ -n "$others" ]; then
+            echo "$others"
+            echo "::error::AI Footprint must have no entitlements besides the App Sandbox and read-only folders."
+            exit 1
+          fi
+          echo "Sandboxed, with read-only folders and nothing else."
+
+      - name: Check the app never uses the network, other apps, input or the screen
+        run: |
+          pattern='URLSession|NWConnection|CFSocket|NSWorkspace[^)]*\.open\(|openURL|openApplication|LSOpen|Process\(\)|posix_spawn|NSTask|CGEvent(Tap|PostToPid)|tapCreate|AXIsProcessTrusted|AXUIElement|CGWindowListCreateImage|SCShareableContent|NSAppleScript|NSEvent\.addGlobalMonitor'
+          if grep -rnE "$pattern" Sources; then
+            echo "::error::AI Footprint must not use the network, open URLs, start programs, control other apps, or read input or the screen."
+            exit 1
+          fi
+          echo "No networking, URL opening, child processes, Apple Events, event taps, Accessibility or screen capture."
+
+      - name: Check the app never stops or deletes anything
+        run: |
+          pattern='\bkill\(|killpg|\.terminate\(\)|forceTerminate|removeItem|trashItem|recycle\(|unlink\(|rmdir\(|truncate'
+          # Its own unreadable history file is moved aside, inside its container.
+          if grep -rnE "$pattern" Sources; then
+            echo "::error::AI Footprint is read-only: it must never stop a process or delete a file."
+            exit 1
+          fi
+          echo "Nothing is stopped or deleted."
+
+      - name: Check only the system reader and the history store open files
+        run: |
+          pattern='Data\(contentsOf|contents\(atPath|String\(contentsOf|FileHandle|fopen\(|\bopen\(|mmap\('
+          found="$(grep -rnE "$pattern" Sources | grep -v -e "^Sources/AIFootprint/SystemReader.swift:" -e "^Sources/AIFootprint/HistoryStore.swift:" || true)"
+          if [ -n "$found" ]; then
+            echo "$found"
+            echo "::error::Only SystemReader.swift may open files outside the app's own history."
+            exit 1
+          fi
+          echo "Files are only opened by SystemReader.swift and HistoryStore.swift."

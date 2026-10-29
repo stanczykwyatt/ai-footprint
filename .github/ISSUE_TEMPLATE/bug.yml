@@ -1,0 +1,30 @@
+name: Bug report
+description: Something isn't working, or a process, folder or receipt is wrong.
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What were you doing, what did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: Details
+      description: For a process, its name, how you started it and the tool it belongs to. For a receipt, right-click it in the window and choose Copy Receipt. Leave out anything you'd rather not share, like command-line arguments.
+      render: text
+  - type: input
+    id: version
+    attributes:
+      label: AI Footprint version
+      description: Menu bar icon → About AI Footprint.
+    validations:
+      required: true
+  - type: input
+    id: macos
+    attributes:
+      label: macOS version
+    validations:
+      required: true

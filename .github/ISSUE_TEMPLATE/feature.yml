@@ -1,0 +1,19 @@
+name: Feature request
+description: Suggest an idea, or another AI tool to look for.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What would it help you do?
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: How do you picture it working?
+  - type: textarea
+    id: tool
+    attributes:
+      label: For a new tool
+      description: Where it keeps its files and what each folder holds, which ones hold tokens, keys or settings, and what its processes and login items are called.

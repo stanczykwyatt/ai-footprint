@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+	Everything AI Footprint is allowed to do. The App Sandbox blocks anything not listed here.
+	There is no network entitlement, so it cannot connect to the internet at all, and no Apple
+	Events, so it cannot control other apps.
+
+	The only files it may open are the folders below, read-only: where AI tools keep models, caches,
+	logs and transcripts, plus your login items. They're named one by one so that each tool's
+	settings, sign-in tokens and keys stay out of reach, like ~/.codex/auth.json,
+	~/.cache/huggingface/token and Ollama's private key. Writing to any of them is blocked.
+	Sources/FootprintCore/Catalog.swift lists the same folders, and a test checks the two match.
+-->
+<plist version="1.0">
+<dict>
+	<key>com.apple.security.app-sandbox</key>
+	<true/>
+	<key>com.apple.security.temporary-exception.files.home-relative-path.read-only</key>
+	<array>
+		<string>/.claude/projects/</string>
+		<string>/.claude/file-history/</string>
+		<string>/.claude/shell-snapshots/</string>
+		<string>/.claude/todos/</string>
+		<string>/.claude/debug/</string>
+		<string>/.claude/plugins/</string>
+		<string>/.claude/telemetry/</string>
+		<string>/.local/share/claude/</string>
+		<string>/.local/state/claude/</string>
+		<string>/Library/Caches/claude-cli-nodejs/</string>
+		<string>/Library/Application Support/Claude/vm_bundles/</string>
+		<string>/Library/Application Support/Claude/claude-code/</string>
+		<string>/Library/Application Support/Claude/claude-code-vm/</string>
+		<string>/Library/Application Support/Claude/Cache/</string>
+		<string>/Library/Application Support/Claude/Code Cache/</string>
+		<string>/Library/Logs/Claude/</string>
+		<string>/.codex/sessions/</string>
+		<string>/.codex/archived_sessions/</string>
+		<string>/.codex/log/</string>
+		<string>/.codex/history.jsonl</string>
+		<string>/.ollama/models/</string>
+		<string>/.ollama/logs/</string>
+		<string>/.lmstudio/models/</string>
+		<string>/.lmstudio/extensions/</string>
+		<string>/.lmstudio/server-logs/</string>
+		<string>/.cache/lm-studio/</string>
+		<string>/.cache/huggingface/hub/</string>
+		<string>/.cache/huggingface/datasets/</string>
+		<string>/.cache/huggingface/xet/</string>
+		<string>/.cache/huggingface/assets/</string>
+		<string>/Library/LaunchAgents/</string>
+	</array>
+</dict>
+</plist>

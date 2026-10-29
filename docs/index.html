@@ -1,0 +1,485 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>AI Footprint: see what AI coding tools leave on your Mac</title>
+  <meta name="description" content="AI Footprint is a free, open-source Mac menu bar app that shows the disk space, background processes, orphaned MCP servers and login items left by Claude Code, Codex, Ollama, LM Studio and Hugging Face, with a receipt for every update. Read-only, no internet access.">
+  <meta name="keywords" content="ai tools disk space mac, claude code disk usage, codex background process, ollama models disk space, orphaned mcp server, mcp servers running mac, launchagents ai tools, hugging face cache size mac, menu bar app">
+  <link rel="canonical" href="https://stanczykwyatt.github.io/ai-footprint/">
+  <link rel="icon" href="icon.png">
+  <link rel="apple-touch-icon" href="icon.png">
+  <meta name="theme-color" content="#0d0f12">
+  <meta name="color-scheme" content="dark">
+
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="AI Footprint">
+  <meta property="og:title" content="AI Footprint">
+  <meta property="og:description" content="See what AI coding tools leave on your Mac: disk, background processes, MCP servers and login items, with a receipt for every update. Free, open source, read-only.">
+  <meta property="og:url" content="https://stanczykwyatt.github.io/ai-footprint/">
+  <meta property="og:image" content="https://stanczykwyatt.github.io/ai-footprint/social.png">
+  <meta property="og:image:width" content="1280">
+  <meta property="og:image:height" content="640">
+  <meta property="og:image:alt" content="AI Footprint: see what AI coding tools leave on your Mac.">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "AI Footprint",
+    "description": "A read-only Mac menu bar app that shows the disk space, background processes, MCP servers and login items that AI coding tools leave on the Mac, with a before-and-after receipt for every update.",
+    "operatingSystem": "macOS 14 or later",
+    "applicationCategory": "UtilitiesApplication",
+    "url": "https://stanczykwyatt.github.io/ai-footprint/",
+    "downloadUrl": "https://github.com/stanczykwyatt/ai-footprint/releases/latest/download/AI-Footprint.zip",
+    "softwareVersion": "0.1.0",
+    "datePublished": "2026-11-01",
+    "dateModified": "2026-11-01",
+    "releaseNotes": "https://github.com/stanczykwyatt/ai-footprint/releases/tag/v0.1.0",
+    "featureList": [
+      "Disk use per AI tool, split into models, caches, logs, transcripts and installed versions",
+      "Background processes with what started each one",
+      "MCP servers, with orphaned servers flagged",
+      "Login items each tool installed, and when they run",
+      "Before-and-after receipts when a tool updates or adds a login item",
+      "Copy Stop Command and Show in Finder; it never deletes or stops anything itself",
+      "No internet access and read-only file access, enforced by the macOS App Sandbox"
+    ],
+    "image": "https://stanczykwyatt.github.io/ai-footprint/icon.png",
+    "screenshot": "https://stanczykwyatt.github.io/ai-footprint/screenshot-dark.png",
+    "license": "https://opensource.org/licenses/MIT",
+    "isAccessibleForFree": true,
+    "author": { "@type": "Person", "name": "Wyatt Stanczyk", "url": "https://wyattstanczyk.com" },
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "How much disk space do AI coding tools use on a Mac?",
+        "acceptedAnswer": { "@type": "Answer", "text": "It varies a lot: a few hundred megabytes for a coding assistant's transcripts and logs, several gigabytes for a virtual machine or a bundled runtime, and tens of gigabytes for local models. AI Footprint adds it up per tool and per folder, so you can see where it goes." }
+      },
+      {
+        "@type": "Question",
+        "name": "What is an orphaned MCP server?",
+        "acceptedAnswer": { "@type": "Answer", "text": "An MCP server is a small program an AI tool starts to give it extra abilities. It normally quits with the tool. If the tool crashes or is closed the wrong way, the server can keep running with nothing connected to it. AI Footprint flags those and gives you the command to stop them." }
+      },
+      {
+        "@type": "Question",
+        "name": "How do I see what an AI tool's update changed on my Mac?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Leave AI Footprint running. When a tool updates, installs itself, or adds or removes a login item, it writes a receipt with the version change, how much disk each folder gained or lost, and which login items came or went." }
+      },
+      {
+        "@type": "Question",
+        "name": "Is AI Footprint a cleaner?",
+        "acceptedAnswer": { "@type": "Answer", "text": "No. It never deletes or stops anything. It shows what's there, and Show in Finder and Copy Stop Command leave every change to you." }
+      },
+      {
+        "@type": "Question",
+        "name": "Can AI Footprint read my API keys or prompts?",
+        "acceptedAnswer": { "@type": "Answer", "text": "No. It can only read the folders it lists, one by one, and sign-in tokens, keys and settings are left out. It measures files without opening them, never saves command-line arguments, and has no internet access." }
+      }
+    ]
+  }
+  </script>
+
+  <style>
+    :root {
+      --gap: clamp(12px, 4.5vmin, 72px);
+      --inset: clamp(6px, 1.1vmin, 12px);
+      --radius: clamp(22px, 3.4vmin, 38px);
+      --ice: #9ed1ff;
+      --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      background: #0d0f12;
+      color: #fff;
+      font: 16px/1.5 var(--sans);
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: inherit; }
+    a:focus-visible { outline: 2px solid #fff; outline-offset: 3px; border-radius: 6px; }
+
+    /* Cool silver light behind the glass, with a faint lattice. */
+    .scene {
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(40% 36% at 16% 20%, rgba(214, 226, 242, 0.62), transparent 70%),
+        radial-gradient(36% 34% at 86% 24%, rgba(150, 174, 206, 0.52), transparent 72%),
+        radial-gradient(44% 40% at 70% 88%, rgba(190, 206, 228, 0.46), transparent 70%),
+        radial-gradient(30% 28% at 24% 84%, rgba(112, 134, 166, 0.42), transparent 70%),
+        linear-gradient(180deg, #141820, #0d0f12);
+    }
+    .scene::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+      background-size: 56px 56px;
+      -webkit-mask-image: radial-gradient(ellipse at center, #000 20%, transparent 78%);
+      mask-image: radial-gradient(ellipse at center, #000 20%, transparent 78%);
+    }
+
+    .glass {
+      position: fixed;
+      inset: var(--gap);
+      border-radius: var(--radius);
+      background: rgba(16, 19, 24, 0.46);
+      -webkit-backdrop-filter: blur(28px) saturate(140%);
+      backdrop-filter: blur(28px) saturate(140%);
+      box-shadow: 0 30px 90px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    }
+    .edge {
+      position: absolute;
+      inset: var(--inset);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: calc(var(--radius) - var(--inset));
+      pointer-events: none;
+    }
+    .content {
+      position: absolute;
+      inset: var(--inset);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      padding: clamp(16px, 3vmin, 30px) clamp(18px, 4vmin, 40px);
+      scrollbar-width: thin;
+    }
+
+    .label {
+      font: 12px/1.4 var(--mono);
+      letter-spacing: 0.06em;
+      color: rgba(255, 255, 255, 0.55);
+      text-decoration: none;
+    }
+    a.label:hover { color: #fff; }
+    .bar { display: flex; justify-content: space-between; gap: 12px; }
+    @media (max-width: 400px) {
+      .bar .new { display: none; }
+    }
+
+    .center {
+      min-height: calc(100% - 40px);
+      padding: clamp(10px, 3vh, 28px) 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+    .title { display: flex; flex-direction: column; align-items: center; margin-bottom: 8px; }
+    .icon { width: clamp(56px, 9vh, 76px); height: auto; filter: drop-shadow(0 10px 24px rgba(0, 0, 0, 0.45)); }
+    h1 {
+      margin: clamp(10px, 2vh, 18px) 0 0;
+      font-size: clamp(36px, min(6.6vw, 8.4vh), 70px);
+      font-weight: 600;
+      line-height: 1;
+      letter-spacing: -0.035em;
+    }
+    .lede { margin: 0 0 clamp(16px, 3.4vh, 28px); max-width: 34em; font-size: clamp(17px, 2.2vw, 20px); color: rgba(255, 255, 255, 0.72); }
+
+    /* A looping demo: you're typing, another app jumps in front, and the menu bar names it.
+       Without JavaScript, or with reduced motion, it shows the finished scene. */
+    .demo { margin-bottom: clamp(18px, 3.6vh, 30px); }
+    .desk {
+      position: relative;
+      width: min(480px, 84vw);
+      aspect-ratio: 16 / 10;
+      max-height: 34vh;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 16px;
+      background:
+        radial-gradient(60% 60% at 20% 30%, rgba(214, 226, 242, 0.22), transparent 70%),
+        radial-gradient(50% 50% at 85% 80%, rgba(150, 174, 206, 0.2), transparent 70%),
+        rgba(255, 255, 255, 0.04);
+      box-shadow: 0 14px 36px rgba(0, 0, 0, 0.28);
+      overflow: hidden;
+      text-align: left;
+      font-size: clamp(9px, 1.5vmin, 12px);
+    }
+    .menubar {
+      position: absolute;
+      inset: 0 0 auto;
+      height: 18px;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 9px;
+      padding: 0 10px;
+      background: rgba(0, 0, 0, 0.35);
+    }
+    .menubar i { width: 10px; height: 6px; border-radius: 2px; background: rgba(255, 255, 255, 0.35); }
+    .menubar svg { width: 13px; height: 13px; overflow: visible; }
+    .menubar .dot { opacity: 0; transition: opacity 0.2s; }
+    .is-updated .menubar .dot { opacity: 1; }
+    .is-open .menubar .dot { opacity: 0; }
+    .win {
+      position: absolute;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 9px;
+      background: #262a31;
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.4);
+      padding: 24px 10px 10px;
+      line-height: 1.6;
+    }
+    .win::before {
+      content: "";
+      position: absolute;
+      top: 8px;
+      left: 9px;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #ff5f57;
+      box-shadow: 11px 0 #febc2e, 22px 0 #28c840;
+    }
+    .terminal { left: 5%; top: 22%; width: 56%; height: 66%; font-family: var(--mono); font-size: 0.92em; }
+    .terminal > span { display: block; color: rgba(255, 255, 255, 0.55); white-space: nowrap; overflow: hidden; }
+    .terminal .cmd { color: #fff; }
+    .terminal .ok { color: #8ce09a; }
+    .terminal .out { visibility: hidden; }
+    .terminal .out.shown { visibility: visible; }
+    .caret { display: inline-block; width: 0.55em; height: 1.05em; margin-left: 1px; vertical-align: -2px; background: rgba(255, 255, 255, 0.8); }
+    .menu {
+      position: absolute;
+      right: 8px;
+      top: 22px;
+      width: 58%;
+      padding: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 9px;
+      background: #2b2d34;
+      box-shadow: 0 14px 30px rgba(0, 0, 0, 0.5);
+      opacity: 0;
+      transform: translateY(-4px);
+      transition: opacity 0.15s, transform 0.2s;
+    }
+    .is-open .menu { opacity: 1; transform: none; }
+    .menu .muted { color: rgba(255, 255, 255, 0.45); padding: 2px 6px; }
+    .menu .tool { display: flex; gap: 7px; align-items: center; padding: 3px 6px; }
+    .menu .tool small, .menu .receipt small { display: block; opacity: 0.6; }
+    .menu .tile { width: 1.7em; height: 1.7em; border-radius: 0.42em; flex: none; }
+    .menu .receipt { margin: 4px 0 0; padding: 5px 6px; border-radius: 6px; background: #2f6fe0; }
+    .menu .receipt small { opacity: 0.85; }
+    @media (prefers-reduced-motion: reduce) {
+      .demo *, .demo *::before, .demo *::after { transition: none !important; }
+    }
+
+    .actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-bottom: 16px; }
+    .button {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 11px 22px;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      border-radius: 999px;
+      font-size: 15px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: border-color 0.15s, background-color 0.15s;
+    }
+    .button:hover { border-color: rgba(255, 255, 255, 0.6); }
+    .button .star { width: 15px; height: 15px; fill: #fff; }
+    .button.solid { border-color: #fff; background: #fff; color: #0d0f12; }
+    .button.solid:hover { background: rgba(255, 255, 255, 0.86); }
+
+    .thanks { margin: 0 0 14px; font-size: 14px; color: rgba(255, 255, 255, 0.75); animation: drop 0.4s ease-out both; }
+    @keyframes drop {
+      from { opacity: 0; transform: translateY(-12px); }
+      to { opacity: 1; transform: none; }
+    }
+
+    /* How it decides, then questions people search for, below the fold. */
+    .section {
+      width: min(720px, 100%);
+      margin: clamp(20px, 5vh, 48px) auto clamp(8px, 2vh, 16px);
+      display: grid;
+      gap: 10px;
+    }
+    .section h2 { margin: 0 0 6px; font-size: 22px; font-weight: 600; letter-spacing: -0.02em; text-align: center; }
+    .shot { width: 100%; height: auto; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.14); box-shadow: 0 14px 36px rgba(0, 0, 0, 0.35); }
+    .verdicts { display: grid; gap: 8px; margin: 6px 0 0; padding: 0; list-style: none; }
+    .verdicts li {
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.04);
+      padding: 10px 16px;
+      color: rgba(255, 255, 255, 0.72);
+      font-size: 15px;
+    }
+    .verdicts b { color: #fff; }
+    .verdicts .key b { color: var(--ice); }
+    .section details {
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.04);
+      padding: 12px 16px;
+    }
+    .section summary { cursor: pointer; font-weight: 600; }
+    .section details p { margin: 8px 0 0; color: rgba(255, 255, 255, 0.72); font-size: 15px; }
+
+    .foot { display: grid; gap: 4px; margin-top: clamp(16px, 3vh, 28px); text-align: center; }
+    .foot p { margin: 0; font: 11px/1.6 var(--mono); letter-spacing: 0.03em; color: rgba(255, 255, 255, 0.4); }
+    .foot a { color: rgba(255, 255, 255, 0.7); }
+
+    /* On shorter screens the icon moves beside the name, so the top section still fits. */
+    @media (max-height: 760px), (max-width: 480px) {
+      .title { flex-direction: row; gap: clamp(10px, 1.6vh, 16px); margin-top: clamp(4px, 1vh, 10px); }
+      .icon { width: clamp(36px, min(6.4vw, 7.6vh), 58px); }
+      h1 { margin: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="scene" aria-hidden="true"></div>
+
+  <main class="glass">
+    <div class="edge" aria-hidden="true"></div>
+    <div class="content">
+      <nav class="bar" aria-label="Site">
+        <a class="label" href="https://github.com/stanczykwyatt/ai-footprint/releases/tag/v0.1.0">ai footprint · v0.1<span class="new"> · what's new</span></a>
+        <a class="label" href="https://github.com/stanczykwyatt/ai-footprint">github ↗</a>
+      </nav>
+
+      <section class="center">
+        <div class="title">
+          <img class="icon" src="icon.png" alt="" width="76" height="76">
+          <h1>AI Footprint</h1>
+        </div>
+        <p class="lede">Models, logs, background servers, MCP servers and login items. See what your AI coding tools leave on your Mac, and what every update changed.</p>
+
+        <div class="demo is-updated is-open" role="img" aria-label="Demo: a made-up AI tool called Driftwood Code updates itself in Terminal. A dot appears on the AI Footprint menu bar icon, and its menu shows the update's receipt: version 3.1.4 to 3.2.0, plus 1.9 GB, and a login item added.">
+          <div class="desk" aria-hidden="true">
+            <div class="menubar">
+              <svg viewBox="0 0 16 16">
+                <rect x="2.6" y="2.2" width="3.6" height="5.6" rx="1.8" fill="#fff"/>
+                <rect x="2.9" y="8.6" width="3" height="3" rx="1.5" fill="#fff"/>
+                <rect x="8.4" y="4.6" width="3.6" height="5.6" rx="1.8" fill="#fff"/>
+                <rect x="8.7" y="11" width="3" height="3" rx="1.5" fill="#fff"/>
+                <circle class="dot" cx="14.4" cy="2.6" r="2.2" fill="#fff"/>
+              </svg>
+              <i></i><i></i><i></i>
+            </div>
+            <div class="win terminal">
+              <span class="cmd">~ % <span class="typed">driftwood update</span><span class="caret"></span></span>
+              <span class="out shown">Downloading 3.2.0…</span>
+              <span class="out shown">Installing background service…</span>
+              <span class="out ok shown">Updated 3.1.4 → 3.2.0</span>
+            </div>
+            <div class="menu">
+              <div class="muted">AI tools use 14 GB on this Mac</div>
+              <div class="tool"><span class="tile" style="background:linear-gradient(#9ea6b5,#545b6e)"></span><span>Ollama 0.12.3<small>8.4 GB · 2 processes</small></span></div>
+              <div class="tool"><span class="tile" style="background:linear-gradient(#4dc7bd,#1a8085)"></span><span>Driftwood Code 3.2.0<small>2.6 GB · 1 login item</small></span></div>
+              <div class="receipt">Driftwood Code 3.1.4 → 3.2.0<small>Just now · +1.9 GB, added a login item</small></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="actions">
+          <a class="button solid" href="https://github.com/stanczykwyatt/ai-footprint/releases/latest/download/AI-Footprint.zip">Download for Mac</a>
+          <a class="button" href="https://github.com/stanczykwyatt/ai-footprint">
+            <svg class="star" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.4l1.95 4.02 4.43.6-3.23 3.08.79 4.4L8 11.38 4.06 13.5l.79-4.4L1.62 6.02l4.43-.6z"/></svg>
+            Star on GitHub
+          </a>
+        </div>
+        <p class="thanks" id="thanks" hidden>Thanks for downloading! If it helps you find something, a <a href="https://github.com/stanczykwyatt/ai-footprint">star on GitHub</a> helps other people find it.</p>
+        <p class="label">free · open source · macos 14+ · read-only · no internet access</p>
+      </section>
+
+      <section class="section" aria-labelledby="what-title">
+        <h2 id="what-title">What it shows</h2>
+        <img class="shot" src="screenshot-dark.png" width="980" height="900" alt="The AI Footprint window: AI tools use 14 GB. An orphaned MCP server at the top, then each tool with its folders and sizes, its processes and what started them, and its login items." loading="lazy">
+        <ul class="verdicts">
+          <li><b>On disk</b>: models, caches, logs, transcripts, virtual machines and installed versions for Claude Code, the Claude app, Codex, Ollama, LM Studio and Hugging Face, with the biggest things in each folder.</li>
+          <li><b>Running</b>: each tool's processes, their memory, and what keeps them running: an app, a terminal, a login item, another tool, or nothing at all.</li>
+          <li class="key"><b>Orphaned MCP servers</b>: servers still running after the app that started them quit, doing nothing but using memory.</li>
+          <li><b>Login items</b>: what each tool set to start at login or restart whenever it quits.</li>
+          <li class="key"><b>Update receipts</b>: when a tool updates or adds a login item, the version change, the disk each folder gained or lost, and the login items that came or went.</li>
+        </ul>
+      </section>
+
+      <section class="section" aria-labelledby="faq-title">
+        <h2 id="faq-title">Questions</h2>
+        <details>
+          <summary>How much disk space do AI coding tools use?</summary>
+          <p>It varies a lot: a few hundred megabytes for a coding assistant's transcripts and logs, several gigabytes for a virtual machine or a bundled runtime, and tens of gigabytes for local models. AI Footprint adds it up per tool and per folder, so you can see where it goes.</p>
+        </details>
+        <details>
+          <summary>Is it a cleaner?</summary>
+          <p>No. It never deletes or stops anything. It shows what's there, Show in Finder takes you to it, and Copy Stop Command gives you the exact command for Terminal, shown before you copy it. Every change is yours to make.</p>
+        </details>
+        <details>
+          <summary>What is an orphaned MCP server?</summary>
+          <p>An MCP server is a small program an AI tool starts to give it extra abilities, like reading files or searching the web. It normally quits with the tool. If the tool crashes or is closed the wrong way, the server can keep running with nothing connected to it. AI Footprint flags those.</p>
+        </details>
+        <details>
+          <summary>How do I see what an update changed?</summary>
+          <p>Leave AI Footprint running. It checks every 15 minutes, and when a tool updates, installs itself, or adds or removes a login item, the menu bar icon gets a dot and Recent Updates has a receipt with what changed.</p>
+        </details>
+        <details>
+          <summary>Can it read my API keys or prompts?</summary>
+          <p>No. It can only read the folders it lists, one by one, with sign-in tokens, keys and settings left out. It measures files without opening them, never saves command-line arguments, and has no internet access. <a href="https://github.com/stanczykwyatt/ai-footprint/blob/main/SECURITY.md">The details are in SECURITY.md</a>, and the code is open source.</p>
+        </details>
+      </section>
+
+      <footer class="foot">
+        <p>Also free: <a href="https://stanczykwyatt.github.io/show-desktop/">Show Desktop</a>, <a href="https://stanczykwyatt.github.io/copy-2fa/">Copy 2FA</a> and <a href="https://stanczykwyatt.github.io/who-stole-my-focus/">Who Stole My Focus</a>.</p>
+        <p>AI Footprint collects no data, and this site has no cookies or tracking. MIT License. Not affiliated with Apple, Anthropic, OpenAI, Ollama, Element Labs or Hugging Face; their names belong to their owners. Driftwood Code in the demo is made up.</p>
+      </footer>
+    </div>
+  </main>
+
+  <script>
+    // After a download, ask for a star, which is when people are most glad to give one.
+    document.querySelector(".button.solid").addEventListener("click", () => {
+      document.getElementById("thanks").hidden = false;
+    });
+
+    // Plays the demo on a loop. The page starts on the finished scene, so it still makes sense
+    // without JavaScript or with reduced motion.
+    const demo = document.querySelector(".demo");
+    if (!matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      const command = "driftwood update";
+      const typed = demo.querySelector(".typed");
+      const lines = [...demo.querySelectorAll(".out")];
+      let timer;
+
+      const wait = (ms) => new Promise((done) => { timer = setTimeout(done, ms); });
+
+      async function play() {
+        demo.classList.remove("is-updated", "is-open");
+        typed.textContent = "";
+        lines.forEach((line) => line.classList.remove("shown"));
+        await wait(700);
+        for (const letter of command) { typed.textContent += letter; await wait(70); }
+        for (const line of lines) { await wait(520); line.classList.add("shown"); }
+        await wait(500);
+        demo.classList.add("is-updated");
+        await wait(1100);
+        demo.classList.add("is-open");
+        await wait(3600);
+        play();
+      }
+
+      // Starts over when the tab comes back, rather than catching up on missed steps.
+      document.addEventListener("visibilitychange", () => {
+        clearTimeout(timer);
+        if (!document.hidden) play();
+      });
+      play();
+    }
+  </script>
+</body>
+</html>
