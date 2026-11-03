@@ -55,38 +55,53 @@
   }
   </script>
   <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    "mainEntity": [
-      {
-        "@type": "Question",
-        "name": "How much disk space do AI coding tools use on a Mac?",
-        "acceptedAnswer": { "@type": "Answer", "text": "It varies a lot: a few hundred megabytes for a coding assistant's transcripts and logs, several gigabytes for a virtual machine or a bundled runtime, and tens of gigabytes for local models. AI Footprint adds it up per tool and per folder, so you can see where it goes." }
-      },
-      {
-        "@type": "Question",
-        "name": "What is an orphaned MCP server?",
-        "acceptedAnswer": { "@type": "Answer", "text": "An MCP server is a small program an AI tool starts to give it extra abilities. It normally quits with the tool. If the tool crashes or is closed the wrong way, the server can keep running with nothing connected to it. AI Footprint flags those and gives you the command to stop them." }
-      },
-      {
-        "@type": "Question",
-        "name": "How do I see what an AI tool's update changed on my Mac?",
-        "acceptedAnswer": { "@type": "Answer", "text": "Leave AI Footprint running. When a tool updates, installs itself, or adds or removes a login item, it writes a receipt with the version change, how much disk each folder gained or lost, and which login items came or went." }
-      },
-      {
-        "@type": "Question",
-        "name": "Is AI Footprint a cleaner?",
-        "acceptedAnswer": { "@type": "Answer", "text": "No. It never deletes or stops anything. It shows what's there, and Show in Finder and Copy Stop Command leave every change to you." }
-      },
-      {
-        "@type": "Question",
-        "name": "Can AI Footprint read my API keys or prompts?",
-        "acceptedAnswer": { "@type": "Answer", "text": "No. It can only read the folders it lists, one by one, and sign-in tokens, keys and settings are left out. It measures files without opening them, never saves command-line arguments, and has no internet access." }
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "How much disk space do AI coding tools use?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "It varies a lot: a few hundred megabytes for a coding assistant's transcripts and logs, several gigabytes for a virtual machine or a bundled runtime, and tens of gigabytes for local models. AI Footprint adds it up per tool and per folder, so you can see where it goes."
       }
-    ]
-  }
-  </script>
+    },
+    {
+      "@type": "Question",
+      "name": "Is it a cleaner?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No. It never deletes or stops anything. It shows what's there, Show in Finder takes you to it, and Copy Stop Command gives you the exact command for Terminal, shown before you copy it. Every change is yours to make."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is an orphaned MCP server?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "An MCP server is a small program an AI tool starts to give it extra abilities, like reading files or searching the web. It normally quits with the tool. If the tool crashes or is closed the wrong way, the server can keep running with nothing connected to it. AI Footprint flags those."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do I see what an update changed?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Leave AI Footprint running. It checks every 15 minutes, and when a tool updates, installs itself, or adds or removes a login item, the menu bar icon gets a dot and Recent Updates has a receipt with what changed."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can it read my API keys or prompts?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No. It can only read the folders it lists, one by one, with sign-in tokens, keys and settings left out. It measures files without opening them, never saves command-line arguments, and has no internet access. The details are in SECURITY.md, and the code is open source."
+      }
+    }
+  ]
+}
+</script>
 
   <style>
     :root {
